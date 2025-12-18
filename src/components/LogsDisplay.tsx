@@ -29,7 +29,7 @@ export function LogsDisplay() {
     queryFn: async () => {
       const fetchLogs = async () => {
         try {
-          const response = await fetch('http://16.16.217.98/logs');
+          const response = await fetch('https://api.zigma.pro/logs');
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
