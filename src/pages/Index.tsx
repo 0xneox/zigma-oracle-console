@@ -9,7 +9,10 @@ import Footer from "@/components/Footer";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground font-mono">
-      {/* Scanline overlay */}
+      {/* CRT Effects */}
+      <div className="crt-glow" />
+      <div className="crt-vignette" />
+      <div className="crt-flicker" />
       <div className="scanline" />
       
       <Hero />
