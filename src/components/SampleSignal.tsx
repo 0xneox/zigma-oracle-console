@@ -2,7 +2,10 @@ const SampleSignal = () => {
   return (
     <section id="signal" className="py-20 px-4 border-t border-border">
       <div className="container max-w-4xl">
-        <div className="terminal-header mb-4">[ SAMPLE SIGNAL OUTPUT ]</div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Below is a rare qualifying signal from the last cycle.
+        </p>
+        <div className="terminal-header mb-4">[ LATEST SIGNAL OUTPUT ]</div>
         
         <div className="terminal-box font-mono text-sm md:text-base">
           <div className="space-y-3">

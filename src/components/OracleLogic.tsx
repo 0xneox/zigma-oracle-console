@@ -1,28 +1,34 @@
+import { useState } from "react";
+
 const OracleLogic = () => {
+  const [expanded, setExpanded] = useState(false);
+
   return (
-    <section id="manifesto" className="py-20 px-4">
+    <section id="logic" className="py-20 px-4">
       <div className="container max-w-4xl">
         {/* Core Logic Block */}
         <div className="terminal-box mb-8">
           <div className="terminal-header">[ ZIGMA CORE LOGIC ]</div>
-          <div className="space-y-2 text-sm md:text-base">
-            <p>• Scans prediction markets</p>
-            <p>• Computes canonical probabilities in code</p>
-            <p>• Consumes evidence, not opinions</p>
+          <div className="space-y-2 text-sm md:text-base mb-4">
             <p>• Outputs delta only</p>
-            <p>• Rejects noise</p>
             <p>• Defaults to NO_TRADE</p>
+            <p>• Consumes evidence, not opinions</p>
           </div>
-        </div>
 
-        {/* What Zigma is NOT */}
-        <div className="terminal-box border-destructive/30">
-          <div className="terminal-header text-destructive">ZIGMA IS NOT:</div>
-          <div className="space-y-2 text-sm md:text-base text-muted-foreground">
-            <p>- A trading bot</p>
-            <p>- A signal spammer</p>
-            <p>- A probability generator</p>
-          </div>
+          {/* Expandable Tier 2 */}
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="text-primary hover:underline text-sm mb-2"
+          >
+            {expanded ? '▼' : '▶'} Deterministic Logic (Advanced)
+          </button>
+          {expanded && (
+            <div className="space-y-2 text-sm md:text-base text-muted-foreground border-t border-border pt-4">
+              <p>• Canonical probabilities</p>
+              <p>• Rejects noise</p>
+              <p>• Market scanning mechanics</p>
+            </div>
+          )}
         </div>
       </div>
     </section>

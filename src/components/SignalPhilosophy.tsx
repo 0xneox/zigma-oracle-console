@@ -15,6 +15,7 @@ const SignalPhilosophy = () => {
           </p>
           
           <div className="mb-8 text-sm md:text-base space-y-1">
+            <p className="text-primary font-semibold mb-2">A signal must pass ALL gates:</p>
             <p className="text-muted-foreground mb-2">ZIGMA SPEAKS ONLY WHEN:</p>
             <p>- Edge survives uncertainty</p>
             <p>- Liquidity is real</p>
@@ -22,20 +23,9 @@ const SignalPhilosophy = () => {
             <p>- Entropy is discounted</p>
           </div>
 
-          {/* Status badges */}
-          <div className="flex flex-wrap gap-2">
-            {statusBadges.map((badge) => (
-              <span
-                key={badge.label}
-                className={`status-badge ${
-                  badge.variant === "warning"
-                    ? "status-badge-warning"
-                    : "status-badge-error"
-                }`}
-              >
-                {badge.label}
-              </span>
-            ))}
+          {/* Status badges - one line */}
+          <div className="text-sm text-muted-foreground">
+            NO_TRADE · EDGE INSUFFICIENT · LIQUIDITY FAIL · VOLATILITY LOCK
           </div>
         </div>
       </div>

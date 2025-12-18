@@ -2,6 +2,9 @@ const TokenUtility = () => {
   return (
     <section className="py-20 px-4 border-t border-border">
       <div className="container max-w-4xl">
+        <p className="text-sm text-muted-foreground mb-6">
+          ZIGMA can exist without a token. The token exists to ration access.
+        </p>
         <div className="terminal-box">
           <div className="terminal-header">ZIGMA TOKEN UTILITY:</div>
           

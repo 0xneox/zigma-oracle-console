@@ -5,6 +5,7 @@ import SampleSignal from "@/components/SampleSignal";
 import Differentiators from "@/components/Differentiators";
 import TokenUtility from "@/components/TokenUtility";
 import Footer from "@/components/Footer";
+import { LogsDisplay } from "@/components/LogsDisplay";
 
 const Index = () => {
   return (
@@ -14,7 +15,7 @@ const Index = () => {
       <div className="crt-vignette" />
       <div className="crt-flicker" />
       <div className="scanline" />
-      
+
       {/* Glitch Effects */}
       <div className="glitch-container">
         <div className="glitch-effect" />
@@ -22,13 +23,21 @@ const Index = () => {
         <div className="glitch-lines" />
         <div className="glitch-noise" />
       </div>
-      
+
       <Hero />
       <OracleLogic />
       <SignalPhilosophy />
       <SampleSignal />
       <Differentiators />
       <TokenUtility />
+
+      {/* Console Section */}
+      <section id="console" className="py-20 px-4 bg-black/50">
+        <div className="container mx-auto">
+          <LogsDisplay />
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
