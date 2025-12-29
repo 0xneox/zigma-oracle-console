@@ -35,12 +35,14 @@ const Index = () => {
   const [marketOutlook, setMarketOutlook] = useState<Signal[]>([]);
   const [rejectedSignals, setRejectedSignals] = useState<Signal[]>([]);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [statusRes, logsRes] = await Promise.all([
-          fetch('http://localhost:3001/status'),
-          fetch('http://localhost:3001/logs')
+          fetch(API_BASE + '/status'),
+          fetch(API_BASE + '/logs')
         ]);
         const statusData = await statusRes.json();
         const logsData = await logsRes.json();
