@@ -46,7 +46,22 @@ const Index = () => {
         ]);
         const statusData = await statusRes.json();
         const logsData = await logsRes.json();
-        setLiveStatus(statusData);
+
+        // Parse header data from logs for consistency
+        let lastCycle = '';
+        let marketsAnalyzed = 0;
+        for (const line of logsData.logs.split('\n')) {
+          if (line.includes('Agent Zigma Cycle:')) {
+            const match = line.match(/Agent Zigma Cycle: ([^ ]+)/);
+            if (match) lastCycle = match[1];
+          }
+          if (line.includes('Markets deeply evaluated this cycle:')) {
+            const match = line.match(/Markets deeply evaluated this cycle: (\d+)/);
+            if (match) marketsAnalyzed = parseInt(match[1]);
+          }
+        }
+
+        setLiveStatus({ ...statusData, lastRun: lastCycle || statusData.lastRun, marketsMonitored: marketsAnalyzed || statusData.marketsMonitored });
         setLiveLogs(logsData.logs);
         parseSignals(logsData.logs);
       } catch (e) {
@@ -188,8 +203,8 @@ const Index = () => {
           <div className="bg-gray-900 border border-green-400 p-4">
             <h2 className="text-lg mb-2">SYSTEM STATUS: {liveStatus.status?.toUpperCase()}</h2>
             <p>Uptime: {liveStatus.uptime === 0 ? '<current session>' : `${liveStatus.uptime}s`}</p>
-            <p>Last Cycle: {liveStatus.lastRun ? new Date(liveStatus.lastRun).toLocaleDateString() + ' · ' + new Date(liveStatus.lastRun).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' UTC' : '—'}</p>
-            <p>Markets analyzed this cycle: {liveStatus.marketsMonitored}</p>
+            <p>Last completed cycle: {liveStatus.lastRun ? new Date(liveStatus.lastRun).toLocaleDateString() + ' · ' + new Date(liveStatus.lastRun).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' UTC' : '—'}</p>
+            <p>Markets analyzed in latest completed cycle: {liveStatus.marketsMonitored}</p>
             <p>Executable opportunities found: {liveSignals.length}</p>
             <p>Market outlook signals: {marketOutlook.length}</p>
           </div>
@@ -281,7 +296,7 @@ const Index = () => {
             {showAuditLogs && (
               <div className="mt-4">
                 <p className="text-xs text-muted-foreground mb-4">*Informational · Not Trading Signals</p>
-                <LogsDisplay logs={filterLogs(liveLogs)} />
+                <LogsDisplay logs={liveLogs} />
               </div>
             )}
           </div>
