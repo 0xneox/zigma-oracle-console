@@ -1,6 +1,5 @@
 import Hero from "@/components/Hero";
 import Manifesto from "@/components/OracleLogic";
-import LatestSignal from "@/components/LatestSignal";
 import AntiAIManifesto from "@/components/SignalPhilosophy";
 import TokenUtility from "@/components/TokenUtility";
 import Footer from "@/components/Footer";
@@ -15,43 +14,145 @@ interface SystemStatus {
   posts?: number;
 }
 
+interface Signal {
+  market: string;
+  action: string;
+  confidence: string;
+  exposure: string;
+  effectiveEdge?: string;
+  marketOdds?: string;
+  zigmaOdds?: string;
+  timestamp?: string;
+  evaluations?: number;
+}
+
 const Index = () => {
-  const [showLogs, setShowLogs] = useState(false);
-  const [showOperationalLogs, setShowOperationalLogs] = useState(false);
+  const [showRejected, setShowRejected] = useState(false);
+  const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [liveStatus, setLiveStatus] = useState<SystemStatus>({});
   const [liveLogs, setLiveLogs] = useState('');
+  const [liveSignals, setLiveSignals] = useState<Signal[]>([]);
+  const [marketOutlook, setMarketOutlook] = useState<Signal[]>([]);
+  const [rejectedSignals, setRejectedSignals] = useState<Signal[]>([]);
 
   useEffect(() => {
-    const fetchStatus = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch('http://localhost:3001/status');
-        const data = await res.json();
-        setLiveStatus(data);
+        const [statusRes, logsRes] = await Promise.all([
+          fetch('http://localhost:3001/status'),
+          fetch('http://localhost:3001/logs')
+        ]);
+        const statusData = await statusRes.json();
+        const logsData = await logsRes.json();
+        setLiveStatus(statusData);
+        setLiveLogs(logsData.logs);
+        parseSignals(logsData.logs);
       } catch (e) {
-        console.error('Failed to fetch status');
+        console.error('Failed to fetch data');
       }
     };
 
-    const fetchLogs = async () => {
-      try {
-        const res = await fetch('http://localhost:3001/logs');
-        const data = await res.json();
-        setLiveLogs(data.logs);
-      } catch (e) {
-        console.error('Failed to fetch logs');
-      }
-    };
-
-    fetchStatus();
-    fetchLogs();
-
-    const interval = setInterval(() => {
-      fetchStatus();
-      fetchLogs();
-    }, 30000); // Refresh every 30s
-
+    fetchData();
+    const interval = setInterval(fetchData, 30000); // Refresh every 30s
     return () => clearInterval(interval);
   }, []);
+
+  const parseSignals = (logs: string) => {
+    const lines = logs.split('\n');
+    const marketSignals = new Map<string, Signal>(); // market -> latest signal
+    const marketEvaluations = new Map<string, number>(); // market -> count
+    let currentMarket = '';
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      if (line.includes('[LLM] Analyzing:')) {
+        const match = line.match(/\[LLM\] Analyzing: .+ - (.+)/);
+        if (match) {
+          currentMarket = match[1].trim();
+        }
+      }
+
+      if (line.includes(' SIGNAL:')) {
+        const match = line.match(/ SIGNAL: ([^(]+) \((\d+)%\) \| Exposure: ([\d.]+)%/);
+        if (match && currentMarket) {
+          // Count evaluations
+          marketEvaluations.set(currentMarket, (marketEvaluations.get(currentMarket) || 0) + 1);
+
+          const signal: Signal = {
+            market: currentMarket,
+            action: match[1].trim(),
+            confidence: match[2],
+            exposure: match[3],
+            timestamp: new Date().toISOString()
+          };
+
+          // Look ahead for Effective Edge
+          for (let j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+            if (lines[j].includes('Effective Edge:')) {
+              const edgeMatch = lines[j].match(/Effective Edge: ([\d.]+)%/);
+              if (edgeMatch) {
+                signal.effectiveEdge = edgeMatch[1];
+                break;
+              }
+            }
+          }
+
+          // Update latest signal for this market
+          marketSignals.set(currentMarket, signal);
+        }
+      }
+    }
+
+    // Add evaluations to signals
+    for (const [market, signal] of marketSignals) {
+      signal.evaluations = marketEvaluations.get(market) || 1;
+    }
+
+    // Separate live, outlook, and rejected
+    const executableTrades: Signal[] = [];
+    const marketOutlook: Signal[] = [];
+    const rejectedSignals: Signal[] = [];
+
+    for (const signal of marketSignals.values()) {
+      if (signal.action === 'BUY YES' || signal.action === 'BUY NO') {
+        const exposure = parseFloat(signal.exposure);
+        const hasEdge = signal.effectiveEdge && signal.effectiveEdge !== 'N/A';
+        if (exposure > 0 && hasEdge) {
+          executableTrades.push(signal);
+        } else {
+          // Force exposure to 0 for outlook signals
+          signal.exposure = '0.00';
+          marketOutlook.push(signal);
+        }
+      } else if (signal.action === 'NO_TRADE') {
+        rejectedSignals.push(signal);
+      }
+    }
+
+    setLiveSignals(executableTrades);
+    setMarketOutlook(marketOutlook);
+    setRejectedSignals(rejectedSignals);
+  };
+
+  const filterLogs = (logs: string) => {
+    const lines = logs.split('\n');
+    const filtered = lines.filter(line => {
+      const lower = line.toLowerCase();
+      return !(
+        lower.includes('debug') ||
+        lower.includes('safe_mode') ||
+        lower.includes('probability chain') ||
+        lower.includes('baseline edge scan') ||
+        lower.includes('using cached') ||
+        lower.includes('fetched new') ||
+        lower.includes('headlines found') ||
+        lower.includes('news for') ||
+        lower.includes(' signal:')
+      );
+    });
+    return filtered.join('\n');
+  };
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono p-4">
@@ -75,36 +176,113 @@ const Index = () => {
           <TokenUtility />
         </div>
 
-        {/* Right Panel: Execution Console (Live) */}
+        {/* Right Panel: Execution Snapshot (Live) */}
         <div className="space-y-8">
           <div className="text-center border-b border-green-400 pb-4">
             <h1 className="text-2xl font-bold">──────── EXECUTION SNAPSHOT ────────</h1>
           </div>
+
+          {/* Cycle Summary */}
           <div className="bg-gray-900 border border-green-400 p-4">
             <h2 className="text-lg mb-2">SYSTEM STATUS: {liveStatus.status?.toUpperCase()}</h2>
             <p>Uptime: {liveStatus.uptime === 0 ? '<current session>' : `${liveStatus.uptime}s`}</p>
             <p>Last Cycle: {liveStatus.lastRun ? new Date(liveStatus.lastRun).toLocaleDateString() + ' · ' + new Date(liveStatus.lastRun).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' UTC' : '—'}</p>
-            <p>Markets deeply evaluated this cycle: {liveStatus.marketsMonitored}</p>
-            <p>Signals generated: {liveStatus.posts}</p>
+            <p>Markets analyzed this cycle: {liveStatus.marketsMonitored}</p>
+            <p>Executable opportunities found: {liveSignals.length}</p>
+            <p>Market outlook signals: {marketOutlook.length}</p>
           </div>
-          <LatestSignal />
-          <div className="text-center mt-4">
-            <button
-              onClick={() => setShowOperationalLogs(!showOperationalLogs)}
-              className="px-4 py-2 bg-gray-600 text-white hover:bg-gray-500 transition-colors"
-            >
-              {showOperationalLogs ? '▼ OPERATIONAL LOGS (audit)' : '▶ VIEW OPERATIONAL LOGS (audit only)'}
-            </button>
-          </div>
-          {showOperationalLogs && (
-            <section className="mt-4 border-t border-green-400 pt-4">
-              <p className="text-xs text-muted-foreground mb-4">Zigma may evaluate a market multiple times before allowing a trade.</p>
-              <div className="text-center border-b border-green-400 pb-4 mb-4">
-                <h1 className="text-xl font-bold">──────── OPERATIONAL LOGS ────────</h1>
+
+          {/* Executable Trades */}
+          <div className="bg-gray-900 border border-green-400 p-4">
+            <h2 className="text-lg mb-4">🔥 EXECUTABLE TRADES</h2>
+            {liveSignals.length === 0 ? (
+              <p className="text-muted-foreground">No executable trades available.</p>
+            ) : (
+              <div className="space-y-4">
+                {liveSignals.map((signal, index) => (
+                  <div key={index} className="border border-green-400 p-3">
+                    <div className="font-bold text-green-400">{signal.market}</div>
+                    <div className="mt-2 space-y-1 text-sm">
+                      <div><span className="text-muted-foreground">Action:</span> <span className="text-green-400">{signal.action}</span></div>
+                      <div><span className="text-muted-foreground">Confidence:</span> {signal.confidence}%</div>
+                      <div><span className="text-muted-foreground">Suggested Max Exposure:</span> {signal.exposure}%</div>
+                      <div><span className="text-muted-foreground">Final Effective Edge (post-normalization):</span> {signal.effectiveEdge ? `${signal.effectiveEdge}%` : 'N/A'}</div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <LogsDisplay logs={liveLogs} />
-            </section>
-          )}
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">*Edge adjusted due to normalization, liquidity impact, or entropy change.</p>
+
+          {/* Market Outlook */}
+          <div className="bg-gray-900 border border-yellow-400 p-4">
+            <h2 className="text-lg mb-4">🧠 MARKET OUTLOOK (NON-EXECUTABLE)</h2>
+            <p className="text-sm text-muted-foreground mb-4">High-confidence views. No position sizing. Not trades. Conviction ≠ tradable edge.</p>
+            {marketOutlook.length === 0 ? (
+              <p className="text-muted-foreground">No market outlook signals.</p>
+            ) : (
+              <div className="space-y-4">
+                {marketOutlook.map((signal, index) => (
+                  <div key={index} className="border border-yellow-400 p-3">
+                    <div className="font-bold text-yellow-400">{signal.market} {signal.market.includes('2026') ? <span className="text-xs bg-yellow-600 px-2 py-1 rounded">LONG-HORIZON VIEW (Illiquid)</span> : ''}</div>
+                    <div className="mt-2 space-y-1 text-sm">
+                      <div><span className="text-muted-foreground">Action:</span> <span className="text-yellow-400">{signal.action.replace('BUY', 'MODEL LEANS')}</span></div>
+                      <div><span className="text-muted-foreground">Model Conviction:</span> {signal.confidence}%</div>
+                      <div><span className="text-muted-foreground">Suggested Max Exposure:</span> {signal.exposure}%</div>
+                      <div><span className="text-muted-foreground">Final Effective Edge (post-normalization):</span> {signal.effectiveEdge ? `${signal.effectiveEdge}%` : 'N/A'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Rejected Signals (Collapsible) */}
+          <div className="bg-gray-900 border border-green-400 p-4">
+            <button
+              onClick={() => setShowRejected(!showRejected)}
+              className="w-full text-left text-lg mb-2 flex justify-between items-center"
+            >
+              <span>🚫 REJECTED SIGNALS (NO EXECUTION)</span>
+              <span>{showRejected ? '▼' : '▶'}</span>
+            </button>
+            {showRejected && (
+              <div className="space-y-4 mt-4">
+                {rejectedSignals.length === 0 ? (
+                  <p className="text-muted-foreground">No rejected signals.</p>
+                ) : (
+                  rejectedSignals.map((signal, index) => (
+                    <div key={index} className="border border-red-400 p-3">
+                      <div className="font-bold text-red-400">{signal.market}</div>
+                      <div className="mt-2 space-y-1 text-sm">
+                        <div><span className="text-muted-foreground">Status:</span> {signal.action}</div>
+                        <div><span className="text-muted-foreground">Reason:</span> No measurable edge</div>
+                        <div><span className="text-muted-foreground">Evaluations:</span> {signal.evaluations}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Operational Logs (Collapsible) */}
+          <div className="bg-gray-900 border border-green-400 p-4">
+            <button
+              onClick={() => setShowAuditLogs(!showAuditLogs)}
+              className="w-full text-left text-lg mb-2 flex justify-between items-center"
+            >
+              <span>🧾 OPERATIONAL LOGS (AUDIT ONLY)</span>
+              <span>{showAuditLogs ? '▼' : '▶'}</span>
+            </button>
+            {showAuditLogs && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground mb-4">*Informational · Not Trading Signals</p>
+                <LogsDisplay logs={filterLogs(liveLogs)} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
