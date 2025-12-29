@@ -1,9 +1,10 @@
+import React, { useState } from 'react';
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { RefreshCw, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { RefreshCw, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronRight } from "lucide-react";
 
 interface Signal {
   market: string;
@@ -14,6 +15,7 @@ interface Signal {
   effectiveEdge: string;
   entropy: string;
   conviction: string;
+  reason?: string;
 }
 
 interface MarketData {
@@ -26,38 +28,44 @@ interface MarketData {
   edge: number;
 }
 
-export function LogsDisplay() {
+export function LogsDisplay({ logs }: { logs?: string }) {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["logs"],
     queryFn: async () => {
-      // Mock logs data since no API available
+      if (logs) return { logs };
+      // Fallback to mock or API if no logs prop
       const mockLogs = `
 --- Agent Zigma Cycle: 2025-12-19T15:55:33.894Z ---
 [LLM] Analyzing: weed-rescheduled-in-2025 - Weed rescheduled in 2025?
 📊 SIGNAL: NO_TRADE (80%) | Exposure: 0.00%
 DEBUG: Market Weed rescheduled in ..., yesPrice 0.019, action NO_TRADE, winProb 0.01, betPrice 0.5, liquidity 657865.61075
 Effective Edge: 0.6% (raw 1.0%, conf 0.7, entropy 0.1, liqFactor 1)
-[LLM] Analyzing: khamenei-out-as-supreme-leader-of-iran-in-2025 - Khamenei out as Supreme Leader of Iran in 2025?
-📊 SIGNAL: BUY YES (80%) | Exposure: 0.00%
-DEBUG: Market Khamenei out as Supr..., yesPrice 0.013, action BUY YES, winProb 0.07500000000000004, betPrice 0.5, liquidity 56503.25636
-Effective Edge: 2.9% (raw 6.1%, conf 0.7, entropy 0.1, liqFactor 0.7533767514666666)
-[LLM] Analyzing: russia-x-ukraine-ceasefire-in-2025 - Russia x Ukraine ceasefire in 2025?
-📊 SIGNAL: BUY YES (80%) | Exposure: 0.00%
-DEBUG: Market Russia x Ukraine cea..., yesPrice 0.032, action BUY YES, winProb 0.24999999999999997, betPrice 0.5, liquidity 946087.24707
-Effective Edge: 2.3% (raw 6.5%, conf 0.7, entropy 0.5, liqFactor 1)
-[LLM] Analyzing: will-spacex-have-between-160-179-launches-in-2025 - Will SpaceX have between 160-179 launches in 2025?
-📊 SIGNAL: BUY NO (80%) | Exposure: 0.00%
-DEBUG: Market Will SpaceX have bet..., yesPrice 0.983, action BUY NO, winProb 0.01, betPrice 0.5, liquidity 9503.79544
-Effective Edge: 6.5% (raw 90.9%, conf 0.7, entropy 0.1, liqFactor 0.08465119999999999)
-[LLM] Analyzing: will-nvidia-be-the-largest-company-in-the-world-by-market-cap-on-december-31-2025 - Will NVIDIA be the largest company in the world by market cap on December 31?
-📊 SIGNAL: NO_TRADE (80%) | Exposure: 3.00%
-DEBUG: Market Will NVIDIA be the l..., yesPrice 0.935, action NO_TRADE, winProb 0.9249999999999999, betPrice 0.06499999999999995, liquidity 104330.6642
-Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
 `;
       return { logs: mockLogs };
     },
-    refetchInterval: false, // No auto-refresh since mock
+    refetchInterval: false,
   });
+
+  const [expandedMarkets, setExpandedMarkets] = useState<Set<string>>(new Set());
+  const [expandedAudits, setExpandedAudits] = useState<Set<string>>(new Set());
+
+  const toggleExpand = (market: string) => {
+    setExpandedMarkets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(market)) newSet.delete(market);
+      else newSet.add(market);
+      return newSet;
+    });
+  };
+
+  const toggleAudit = (market: string) => {
+    setExpandedAudits(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(market)) newSet.delete(market);
+      else newSet.add(market);
+      return newSet;
+    });
+  };
 
   const parseLogs = (logs: string) => {
     const lines = logs.split('\n');
@@ -94,11 +102,11 @@ Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
       }
 
       // Extract signals
-      if (line.includes('📊 SIGNAL:')) {
-        const match = line.match(/📊 SIGNAL: ([^(]+) \((\d+)%\) \| Exposure: ([\d.]+)%/);
+      if (line.includes(' SIGNAL:')) {
+        const match = line.match(/ SIGNAL: ([^(]+) \((\d+)%\) \| Exposure: ([\d.]+)%/);
         if (match) {
           const signal: Signal = {
-            market: currentMarket || 'Unknown Market',
+            market: currentMarket, // Set to currentMarket from LLM Analyzing
             action: match[1].trim(),
             confidence: match[2],
             exposure: match[3],
@@ -109,6 +117,16 @@ Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
           };
           signals.push(signal);
           lastSignal = signal;
+        }
+      }
+
+      // Extract market name for the last signal
+      if (line.trim().startsWith('Market:')) {
+        const trimmed = line.trim();
+        const match = trimmed.match(/Market: (.+)/);
+        if (match && lastSignal) {
+          lastSignal.market = match[1].trim();
+          console.log('Parsed market:', match[1].trim());
         }
       }
 
@@ -154,6 +172,46 @@ Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
 
   const { signals, markets, lastCycleTime } = parseLogs(data?.logs || '');
 
+  // Group signals by market
+  const groupedSignals = signals.reduce((acc, signal) => {
+    if (!acc[signal.market]) acc[signal.market] = [];
+    acc[signal.market].push(signal);
+    return acc;
+  }, {} as Record<string, Signal[]>);
+
+  // Create final signals per market
+  const finalSignals: Signal[] = Object.entries(groupedSignals).map(([market, sigs]) => {
+    const validSigs = sigs.filter(s => s.action !== 'NO_TRADE' && s.effectiveEdge !== '—' && s.entropy !== '—');
+    if (validSigs.length > 0) {
+      const best = validSigs.reduce((prev, curr) => 
+        (parseFloat(curr.effectiveEdge) || 0) > (parseFloat(prev.effectiveEdge) || 0) ? curr : prev
+      );
+      const edge = parseFloat(best.effectiveEdge);
+      let strength = 'VERY_LOW';
+      if (edge >= 1.5) strength = 'HIGH';
+      else if (edge >= 0.5) strength = 'MEDIUM';
+      else if (edge >= 0.2) strength = 'LOW';
+      return {
+        ...best,
+        conviction: strength,
+        market,
+        timestamp: sigs[0].timestamp
+      };
+    } else {
+      return {
+        market,
+        action: 'NO_TRADE',
+        confidence: '70%',
+        exposure: '0.00%',
+        effectiveEdge: '—',
+        entropy: '—',
+        conviction: '—',
+        timestamp: sigs[0].timestamp,
+        reason: 'Insufficient resolved edge'
+      };
+    }
+  });
+
   return (
     <div className="space-y-6">
       <div className="text-center text-sm text-muted-foreground mb-4">
@@ -177,33 +235,32 @@ Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
             Last analysis: {lastCycleTime || 'No recent cycle'}
           </p>
           <p className="text-sm">
-            Markets analyzed: {markets.length} | Signals generated: {signals.length}
+            Markets deeply evaluated this cycle: {finalSignals.length} | Signals generated: {finalSignals.filter(s => s.action !== 'NO_TRADE').length}
           </p>
         </CardContent>
       </Card>
 
-      {/* Recent Signals */}
+      {/* Final Signals */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Recent Trading Signals</CardTitle>
+          <CardTitle className="text-lg">Final Signals</CardTitle>
         </CardHeader>
         <CardContent>
-          {signals.length > 0 ? (
+          {finalSignals.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Market</TableHead>
                   <TableHead>Action</TableHead>
-                  <TableHead>Model Stability</TableHead>
-                  <TableHead>Exposure</TableHead>
                   <TableHead>Effective Edge</TableHead>
                   <TableHead>Entropy</TableHead>
-                  <TableHead>Conviction</TableHead>
+                  <TableHead>Signal Strength</TableHead>
+                  <TableHead>Suggested Max Exposure</TableHead>
                   <TableHead>Time</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {signals.map((signal, index) => (
+                {finalSignals.map((signal, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium max-w-xs truncate">
                       {signal.market}
@@ -216,15 +273,74 @@ Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
                         {signal.action}
                       </Badge>
                     </TableCell>
-                    <TableCell>{signal.confidence}%</TableCell>
-                    <TableCell>{signal.exposure}%</TableCell>
-                    <TableCell>{signal.effectiveEdge}</TableCell>
-                    <TableCell>{signal.entropy}</TableCell>
-                    <TableCell>{signal.conviction}</TableCell>
+                    <TableCell>{parseFloat(signal.effectiveEdge).toFixed(2)}%</TableCell>
+                    <TableCell title="Entropy is bounded and capped by design.">{signal.entropy}</TableCell>
+                    <TableCell title="Signal Strength reflects post-entropy adjusted edge">{signal.conviction}</TableCell>
+                    <TableCell>{signal.exposure}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(signal.timestamp).toLocaleTimeString()}
                     </TableCell>
                   </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-muted-foreground">No final signals</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Recent Signals */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Evaluation Attempts (Audit)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {signals.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Action</TableHead>
+                  <TableHead>Signal Confidence</TableHead>
+                  <TableHead>Suggested Max Exposure</TableHead>
+                  <TableHead>Effective Edge</TableHead>
+                  <TableHead>Entropy</TableHead>
+                  <TableHead>Signal Strength</TableHead>
+                  <TableHead>Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(groupedSignals).map(([market, sigs]) => (
+                  <React.Fragment key={market}>
+                    <TableRow>
+                      <TableCell colSpan={7} className="font-bold bg-gray-800 text-center cursor-pointer" onClick={() => toggleAudit(market)}>
+                        <div className="flex items-center justify-center">
+                          {expandedAudits.has(market) ? <ChevronDown className="w-4 h-4 mr-2" /> : <ChevronRight className="w-4 h-4 mr-2" />}
+                          {market} → {sigs.length} evaluations (click to expand audit)
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                    {expandedAudits.has(market) && sigs.map((signal, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Badge variant={
+                            signal.action.includes('BUY') ? 'default' :
+                            signal.action === 'NO_TRADE' ? 'secondary' : 'destructive'
+                          }>
+                            {signal.action}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{signal.confidence}%</TableCell>
+                        <TableCell>{signal.exposure}%</TableCell>
+                        <TableCell>{signal.effectiveEdge === 'N/A' ? '—' : parseFloat(signal.effectiveEdge).toFixed(2) + '%'}</TableCell>
+                        <TableCell>{signal.entropy === 'N/A' ? '—' : signal.entropy}</TableCell>
+                        <TableCell>—</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(signal.timestamp).toLocaleTimeString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
@@ -265,7 +381,7 @@ Effective Edge: 54.2% (raw 86.0%, conf 0.7, entropy 0.1, liqFactor 1)
                       <p className="font-medium">{(market.yesPrice * 100).toFixed(1)}%</p>
                     </div>
                     <div>
-                      <p className="text-muted-foreground">Agent Odds</p>
+                      <p className="text-muted-foreground">Zigma Odds</p>
                       <p className="font-medium">{(market.winProb * 100).toFixed(1)}%</p>
                     </div>
                     <div>

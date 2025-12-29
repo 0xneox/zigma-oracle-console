@@ -33,10 +33,6 @@ const Footer = () => {
           ))}
         </div>
 
-        <div className="mt-12 text-xs text-muted-foreground">
-          <span>zigma@oracle:~$ exit</span>
-          <span className="blink ml-1">_</span>
-        </div>
       </div>
     </footer>
   );

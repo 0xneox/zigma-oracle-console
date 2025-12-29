@@ -172,11 +172,6 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Blinking cursor */}
-        <div className="mt-16 text-muted-foreground text-sm">
-          <span>{prompt.displayedText}</span>
-          {prompt.isComplete && <span className="blink">_</span>}
-        </div>
       </div>
     </section>
   );
