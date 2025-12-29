@@ -33,15 +33,8 @@ export function LogsDisplay({ logs }: { logs?: string }) {
     queryKey: ["logs"],
     queryFn: async () => {
       if (logs) return { logs };
-      // Fallback to mock or API if no logs prop
-      const mockLogs = `
---- Agent Zigma Cycle: 2025-12-19T15:55:33.894Z ---
-[LLM] Analyzing: weed-rescheduled-in-2025 - Weed rescheduled in 2025?
-📊 SIGNAL: NO_TRADE (80%) | Exposure: 0.00%
-DEBUG: Market Weed rescheduled in ..., yesPrice 0.019, action NO_TRADE, winProb 0.01, betPrice 0.5, liquidity 657865.61075
-Effective Edge: 0.6% (raw 1.0%, conf 0.7, entropy 0.1, liqFactor 1)
-`;
-      return { logs: mockLogs };
+      // No mock data in prod
+      return { logs: "" };
     },
     refetchInterval: false,
   });
