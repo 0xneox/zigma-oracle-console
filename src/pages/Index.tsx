@@ -3,8 +3,10 @@ import Manifesto from "@/components/OracleLogic";
 import AntiAIManifesto from "@/components/SignalPhilosophy";
 import TokenUtility from "@/components/TokenUtility";
 import Footer from "@/components/Footer";
-import { LogsDisplay } from "@/components/LogsDisplay";
+import { lazy, Suspense } from 'react';
 import { useState, useEffect } from 'react';
+
+const LogsDisplay = lazy(() => import("@/components/LogsDisplay").then(module => ({ default: module.LogsDisplay })));
 
 interface SystemStatus {
   status?: string;
@@ -296,7 +298,9 @@ const Index = () => {
             {showAuditLogs && (
               <div className="mt-4">
                 <p className="text-xs text-muted-foreground mb-4">*Informational · Not Trading Signals</p>
-                <LogsDisplay logs={liveLogs} />
+                <Suspense fallback={<div>Loading audit logs...</div>}>
+                  <LogsDisplay logs={liveLogs} />
+                </Suspense>
               </div>
             )}
           </div>

@@ -69,6 +69,8 @@ const Hero = () => {
               src="/logonobg.png" 
               alt="Agent Zigma Logo" 
               className="h-16 w-auto"
+              width="64"
+              height="64"
             />
           </div>
           <h1 className="text-3xl md:text-5xl font-bold text-primary glow-text mb-2 min-h-[1.2em]">
