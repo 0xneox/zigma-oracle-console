@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 const useTypewriter = (text: string, speed: number = 50, delay: number = 0) => {
   const [displayedText, setDisplayedText] = useState("");
@@ -138,14 +139,14 @@ const Hero = () => {
             quotable.isComplete ? "opacity-100" : "opacity-0"
           }`}
         >
-          <a href="#manifesto" className="terminal-btn inline-flex items-center gap-2">
+          <Link to="/manifesto" className="terminal-btn inline-flex items-center gap-2">
             <span className="text-muted-foreground">&gt;</span>
             READ MANIFESTO
-          </a>
-          <a href="#console" className="terminal-btn-secondary inline-flex items-center gap-2">
+          </Link>
+          <Link to="/logs" className="terminal-btn-secondary inline-flex items-center gap-2">
             <span className="text-muted-foreground">&gt;</span>
             VIEW LIVE SIGNAL LOG
-          </a>
+          </Link>
         </div>
 
         {/* System status (collapsed) */}

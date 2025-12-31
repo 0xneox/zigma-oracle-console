@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
-
 @layer base {
   :root {
     --background: 140 22% 4%;
@@ -22,7 +20,7 @@
     --secondary-foreground: 140 22% 4%;
 
     --muted: 140 15% 12%;
-    --muted-foreground: 153 40% 55%;
+    --muted-foreground: 153 40% 70%;
 
     --accent: 41 100% 50%;
     --accent-foreground: 140 22% 4%;
@@ -61,7 +59,7 @@
     --secondary-foreground: 140 22% 4%;
 
     --muted: 140 15% 12%;
-    --muted-foreground: 153 40% 55%;
+    --muted-foreground: 153 40% 70%;
 
     --accent: 41 100% 50%;
     --accent-foreground: 140 22% 4%;

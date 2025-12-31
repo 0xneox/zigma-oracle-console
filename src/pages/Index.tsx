@@ -5,6 +5,7 @@ import TokenUtility from "@/components/TokenUtility";
 import Footer from "@/components/Footer";
 import { lazy, Suspense } from 'react';
 import { useState, useEffect } from 'react';
+import { Link } from "react-router-dom";
 
 const LogsDisplay = lazy(() => import("@/components/LogsDisplay").then(module => ({ default: module.LogsDisplay })));
 
@@ -174,7 +175,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono p-4">
+    <main className="min-h-screen bg-black text-green-400 font-mono p-4">
       {/* Subtle CRT Effects */}
       <div className="fixed inset-0 bg-gradient-to-b from-transparent via-transparent to-black opacity-20 pointer-events-none" />
       <div className="fixed inset-0 bg-[radial-gradient(circle_at_center,_transparent_50%,_rgba(0,0,0,0.8)_100%)] pointer-events-none" />
@@ -186,11 +187,6 @@ const Index = () => {
             <h1 className="text-2xl font-bold">ORACLE CORE </h1>
           </div>
           <Hero />
-          <Manifesto />
-          <div className="text-center space-y-2">
-            <p>MANIFESTO: /manifesto</p>
-            <p>EXECUTION LOG: /signals</p>
-          </div>
           <AntiAIManifesto />
           <TokenUtility />
         </div>
@@ -308,7 +304,7 @@ const Index = () => {
       </div>
 
       <Footer />
-    </div>
+    </main>
   );
 };
 
