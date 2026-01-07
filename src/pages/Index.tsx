@@ -455,8 +455,10 @@ const Index = () => {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Left Panel: Oracle Core (Static) */}
         <div className="space-y-8">
-          <div className="text-center border-b border-green-400 pb-4">
-            <h1 className="text-2xl font-bold">ORACLE CORE </h1>
+          <div className="text-center border-green-400 pb-4">
+            <h1 className="text-2xl font-bold flex items-center justify-start">
+              <img src="/logonobg.png" alt="Zigma Logo" className="h-24 w-24" />
+            </h1>
           </div>
           <Hero />
           <AntiAIManifesto />
@@ -465,8 +467,8 @@ const Index = () => {
 
         {/* Right Panel: Execution Snapshot (Live) */}
         <div className="space-y-8">
-          <div className="text-center border-b border-green-400 pb-4">
-            <h1 className="text-2xl font-bold">EXECUTION SNAPSHOT</h1>
+          <div className="text-center  border-green-400 pb-4">
+            <h1 className="text-2xl font-bold">SNAPSHOT</h1>
           </div>
 
           {/* Cycle Summary */}
@@ -670,7 +672,6 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="text-center text-sm text-muted-foreground mt-8">Zigma v0.1 is currently scanning 500+ prediction markets every 60 seconds using deep LLM-consensus.</div>
 
       <Footer />
     </main>

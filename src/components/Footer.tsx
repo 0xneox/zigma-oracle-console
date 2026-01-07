@@ -10,12 +10,53 @@ const Footer = () => {
     { label: "Status", href: "#" },
   ];
 
+  const getStatusColumns = () => {
+    const columns = ['Today'];
+    const today = new Date();
+    for (let i = 1; i <= 6; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const formatted = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      columns.push(formatted);
+    }
+    return columns;
+  };
+
+  const statusColumns = getStatusColumns();
+
+  const getRecentEvents = () => {
+    const now = new Date();
+    return [
+      {
+        time: new Date(now.getTime() - 0 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
+        message: 'Oracle Core cycle completed successfully'
+      },
+      {
+        time: new Date(now.getTime() - 0.25 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
+        message: 'API Gateway operational'
+      },
+      {
+        time: new Date(now.getTime() - 0.5 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
+        message: 'Logs processed without issues'
+      },
+      {
+        time: new Date(now.getTime() - 0.75 * 60 * 60 * 1000).toISOString().slice(0, 16).replace('T', ' ') + ' UTC',
+        message: 'Signal engine analysis completed'
+      }
+    ];
+  };
+
+  const recentEvents = getRecentEvents();
+
   return (
     <>
       <footer className="py-16 px-4 border-t border-border">
         <div className="container max-w-4xl">
           <div className="mb-8">
-            <p className="text-primary font-bold mb-1">ZIGMA.PRO</p>
+            <div className="flex items-center justify-start gap-2 mb-1">
+              <img src="/logonobg.png" alt="Zigma Logo" className="h-12 w-12" />
+              <p className="text-primary font-bold">ZIGMA.PRO</p>
+            </div>
             <p className="text-muted-foreground text-sm">
               An independent market oracle.
             </p>
@@ -42,6 +83,7 @@ const Footer = () => {
             <Link to="/docs" className="terminal-link">
               Docs
             </Link>
+            <span className="terminal-link text-muted-foreground">Premium (Coming Soon)</span>
           </div>
 
         </div>
@@ -65,50 +107,35 @@ const Footer = () => {
                   <thead>
                     <tr className="border-b border-green-400">
                       <th className="p-2 text-left">Service</th>
-                      <th className="p-2">Today</th>
-                      <th className="p-2">29 Dec</th>
-                      <th className="p-2">28 Dec</th>
-                      <th className="p-2">27 Dec</th>
-                      <th className="p-2">26 Dec</th>
-                      <th className="p-2">25 Dec</th>
+                      {statusColumns.map(col => (
+                        <th key={col} className="p-2">{col}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     <tr className="border-b border-green-400">
                       <td className="p-2">Oracle Core</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
+                      {statusColumns.map(() => (
+                        <td className="p-2 text-center text-green-400">●</td>
+                      ))}
                     </tr>
                     <tr className="border-b border-green-400">
                       <td className="p-2">API Gateway</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
+                      {statusColumns.map(() => (
+                        <td className="p-2 text-center text-green-400">●</td>
+                      ))}
                     </tr>
                     <tr className="border-b border-green-400">
                       <td className="p-2">Logs Processor</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
+                      {statusColumns.map(() => (
+                        <td className="p-2 text-center text-green-400">●</td>
+                      ))}
                     </tr>
                     <tr>
                       <td className="p-2">Signal Engine</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
-                      <td className="p-2 text-center text-green-400">●</td>
+                      {statusColumns.map(() => (
+                        <td className="p-2 text-center text-green-400">●</td>
+                      ))}
                     </tr>
                   </tbody>
                 </table>
@@ -119,18 +146,11 @@ const Footer = () => {
             <section>
               <h3 className="text-xl font-semibold text-green-400 mb-4">Recent Events</h3>
               <ul className="space-y-2">
-                <li className="border-l-2 border-green-400 pl-4">
-                  <p className="text-sm">2025-12-31 12:00 UTC - Oracle Core cycle completed successfully</p>
-                </li>
-                <li className="border-l-2 border-green-400 pl-4">
-                  <p className="text-sm">2025-12-31 11:45 UTC - API Gateway operational</p>
-                </li>
-                <li className="border-l-2 border-green-400 pl-4">
-                  <p className="text-sm">2025-12-31 11:30 UTC - Logs processed without issues</p>
-                </li>
-                <li className="border-l-2 border-green-400 pl-4">
-                  <p className="text-sm">2025-12-31 11:15 UTC - Signal engine analysis completed</p>
-                </li>
+                {recentEvents.map((event, index) => (
+                  <li key={index} className="border-l-2 border-green-400 pl-4">
+                    <p className="text-sm">{event.time} - {event.message}</p>
+                  </li>
+                ))}
               </ul>
             </section>
           </div>
